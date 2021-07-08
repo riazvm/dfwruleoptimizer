@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Service
 public class DfwOptimizerService implements IDfwOptimizerService {
@@ -143,9 +144,18 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                             ignoredList.add(serviceID);
                         } else {
                             Mono<ServiceEntity> serviceEntities = getServiceEntity(serviceID);
-                            ServiceEntity serviceEntity = serviceEntities.block();
-                            List<ServiceEntityResults> serviceEntityResultsList = serviceEntity.getResults();
+                            getDestinationList(serviceEntities);
 
+                            // here i will have the list of tcp, udp and other ports
+                            // Here i will also have the ignored service List
+                            // I need serviceID and ignored port list to query the service to create a new entry
+                            // create all new service entries for TCP
+                            // create all new extries for UDP
+                            // Update rule
+
+
+                          /*  ServiceEntity serviceEntity = serviceEntities.block();
+                            List<ServiceEntityResults> serviceEntityResultsList = serviceEntity.getResults();
                             if ((!serviceEntityResultsList.isEmpty()) &&
                                     serviceEntityResultsList.size() > 0) {
 
@@ -154,7 +164,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                                     ignoredList.add(serviceID);
                                 } else {
 
-                                    serviceEntityResultsList.forEach(serviceEntityResults -> {
+                                        serviceEntityResultsList.forEach(serviceEntityResults -> {
                                         List<String> sourcePortList = new ArrayList<String>();
                                         List<String> destPortList = new ArrayList<String>();
                                         destPortList = serviceEntityResults.getDestination_ports();
@@ -184,7 +194,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                                 }
 
                             }
-
+                            */
                         }
 
                     } catch (Exception e) {
@@ -201,6 +211,37 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         udpList.forEach(n -> System.out.println("udp----" + n));
         ignoredList.forEach(n -> System.out.println("ignoredList----" + n));
     }
+    public void getDestinationList(Mono<ServiceEntity> serviceEntities)
+    {
+        ServiceEntity serviceEntity = serviceEntities.block();;
+        List<ServiceEntityResults> serviceEntityResultsList = serviceEntity.getResults();
+        List<ServiceEntityResults> tcpServiceEntities=serviceEntityResultsList.stream().filter(tcp -> (tcp.getL4_protocol() != null && tcp.getL4_protocol().equalsIgnoreCase("TCP"))).collect(Collectors.toList());
+        List<List<String>> tcpDestinationPorts=tcpServiceEntities.stream().map(tcp -> tcp.getDestination_ports()).collect(Collectors.toList());
+        tcpDestinationPorts.forEach(l->l.forEach(n-> System.out.println("---tcp---"+n)));
+        List<ServiceEntityResults> udpServiceEntities=serviceEntityResultsList.stream().filter(udp -> (udp.getL4_protocol() != null && udp.getL4_protocol().equalsIgnoreCase("UDP"))).collect(Collectors.toList());
+        List<List<String>> udpDestinationPorts=udpServiceEntities.stream().map(udp -> udp.getDestination_ports()).collect(Collectors.toList());
+        udpDestinationPorts.forEach(l->l.forEach(n-> System.out.println("---udp---"+n)));
+        List<ServiceEntityResults> otherServiceEntities=serviceEntityResultsList.stream().filter(other -> (other.getL4_protocol() != null && !other.getL4_protocol().equalsIgnoreCase("TCP") && !other.getL4_protocol().equalsIgnoreCase("UDP"))).collect(Collectors.toList());
+        otherServiceEntities.forEach(n-> System.out.println(n.getL4_protocol()));
+    }
 
+    public void createOtherServices()
+    {
 
+    }
+
+    public void createTCPService()
+    {
+
+    }
+
+    public void createUDPService()
+    {
+
+    }
+
+    public void updateRule()
+    {
+
+    }
 }
