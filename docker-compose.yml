@@ -1,0 +1,11 @@
+version: "3.1"
+services:
+  resolute-container:
+    image: riazvm/publicrepository:dfwruleoptimizer
+    ports:
+      - 8888:8888
+    environment:
+      - NSX-IP=10.25.0.181
+      - NSX-USER=admin
+      - NSX-PASSWORD=QOtB!4QpnYZ!fogcUtkE
+
