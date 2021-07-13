@@ -6,13 +6,19 @@ import com.nsxt.dfwruleoptimizer.model.ServiceEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * <h1>IDfwOptimizerService</h1>
+ * Interface for DfwOptimizerService Implementation
+ *
+ * @author Riaz Mohamed, Sobana T
+ * @version 1.0
+ * @since 07/13/2021
+ */
 public interface IDfwOptimizerService {
 
    //void findAll();
 
    public Mono<Policy> getAllPolicies() throws Exception;
-
-   public Policy findAll();
 
    public Mono<PolicyRule> getPolicy(String policyID) throws Exception;
 

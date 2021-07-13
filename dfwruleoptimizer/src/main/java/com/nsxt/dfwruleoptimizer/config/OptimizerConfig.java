@@ -25,18 +25,24 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 
+/**
+ * <h1>OptimizerConfig</h1>
+ * Initializes the Webclient
+ *
+ * @author Riaz Mohamed, Sobana T
+ * @version 1.0
+ * @since 07/13/2021
+ */
+
 @Configuration
 public class OptimizerConfig {
 
-    @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder
-                .setConnectTimeout(Duration.ofMillis(3000))
-                .setReadTimeout(Duration.ofMillis(3000))
-                .basicAuthentication("admin","QOtB!4QpnYZ!fogcUtkE")
-                .build();
-
-    }
+    @Value( "${nsx.service.baseurl}" )
+    private String nsxBaseUrl;
+    @Value( "${nsx.service.user}" )
+    private String nsxUser;
+    @Value( "${nsx.service.password}" )
+    private String nsxPassword;
 
     @Bean
     @Description("customer web client")
@@ -51,8 +57,8 @@ public class OptimizerConfig {
         HttpClient httpClient = HttpClient.create().secure(t -> t.sslContext(sslContext));
         return WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient))
                 .exchangeStrategies(exchangeStrategies)
-                .baseUrl("https://10.25.0.181/policy/api/v1/infra")
-                .defaultHeaders(header -> header.setBasicAuth("admin", "QOtB!4QpnYZ!fogcUtkE"))
+                .baseUrl(nsxBaseUrl)
+                .defaultHeaders(header -> header.setBasicAuth(nsxUser,nsxPassword))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
