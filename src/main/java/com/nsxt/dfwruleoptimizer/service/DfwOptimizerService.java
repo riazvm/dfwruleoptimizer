@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
 /**
  * <h1>DfwOptimizerService</h1>
  * The DFW optimizer Service implements all services to optimize
@@ -30,6 +31,10 @@ import java.util.stream.Collectors;
 public class DfwOptimizerService implements IDfwOptimizerService {
 
     Logger logger = LoggerFactory.getLogger(DfwOptimizerService.class);
+
+    @Value("${rule.servicecount}")
+    private int servicecount;
+
 
     @Autowired
     private WebClient webClient;
@@ -47,23 +52,27 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         PolicyRule policyRules = policy.block();
         policyRules.getRules().forEach(rules -> {
             List<String> ruleServices = new ArrayList<>();
-            try {
-                ruleServices = optimizeAndCreateServices(rules.getServices(), rules.getId());
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
+            if (rules.getServices().size() > servicecount) {
+                try {
+                    ruleServices = optimizeAndCreateServices(rules.getServices(), rules.getId());
+
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                rules.setServices(ruleServices);
+                updateServiceRule(policyID, rules);
             }
-            rules.setServices(ruleServices);
-            updateServiceRule(policyID, rules);
 
         });
 
     }
+
     /**
      * optimizeServiceByPolicy - Invoked when optimizing services for a specific rule in a  policy
      * Calls optimizeAndCreateServices & updateServiceRule,
      *
-     * @param  policyID
-     * @param  ruleID
+     * @param policyID
+     * @param ruleID
      * @return void
      */
     public void optimizeServiceByRule(String policyID, String ruleID) throws Exception {
@@ -94,9 +103,11 @@ public class DfwOptimizerService implements IDfwOptimizerService {
             e.printStackTrace();
         }
     }
+
     /**
      * optimizeServiceByPolicy - Invoked when optimizing services for all policieds in the system
      * Calls optimizeAndCreateServices & updateServiceRule,
+     *
      * @return void
      */
     public void optimizeServiceAll() throws Exception {
@@ -111,14 +122,15 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                 policyRules.getRules().forEach(rule ->
                 {
                     List<String> ruleServices = new ArrayList<>();
-                    try {
-                        ruleServices = optimizeAndCreateServices(rule.getServices(), policyRules.getId());
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
+                    if (rule.getServices().size() > servicecount) {
+                        try {
+                            ruleServices = optimizeAndCreateServices(rule.getServices(), policyRules.getId());
+                        } catch (JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
+                        rule.setServices(ruleServices);
+                        updateServiceRule(policy.getId(), rule);
                     }
-                    rule.setServices(ruleServices);
-                    updateServiceRule(policy.getId(), rule);
-
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -126,14 +138,16 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         });
 
     }
+
     /**
      * optimizeAndCreateServices - The service accepts a list of services for a rule and optimizes the
      * services by comibining all the udp entries together and the tcp entries together. Each udp and tcp array
      * size is 15 for individual tcp entries and 7 for ranges
-     *
+     * <p>
      * The service returns a List of services that have been created and ignores
-     *
+     * <p>
      * Calls optimizeService & createServiceEntitiesByProtocol
+     *
      * @param services
      * @param ruleID
      * @return List<String>
@@ -159,23 +173,24 @@ public class DfwOptimizerService implements IDfwOptimizerService {
             //createUDPServiceEntities();
             //createIgnoredServiceEntities();
 
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return serviceIDList;
     }
+
     /**
      * optimizeService - The service accepts a list of services for a rule . Each udp and tcp array
      * size is 15 for individual tcp entries and 7 for ranges. All ignored services are added to a list
      * Sets are used here to avoid duplicates
-     *
+     * <p>
      * The service returns a List of services that have been created and ignored
-     *
+     * <p>
      * Calls getServiceEntity & optimizeServiceEntities
+     *
      * @param services
      * @param ruleID
-     * @return Map<String, Set<String>>
+     * @return Map<String, Set < String>>
      */
     private Map<String, Set<String>> optimizeService(List<String> services, String ruleID) {
         Set<String> ignoredServicesSet = new TreeSet<String>();
@@ -231,20 +246,21 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         }
         return serviceMap;
     }
+
     /**
      * optimizeServiceEntities - The service accepts a list of service entries and combines all
      * udp , tcp and other service entries
-     *
+     * <p>
      * The service returns a map with a set of combined tcp, udp and other service sets
      *
      * @param serviceEntityResultsList
      * @param serviceID
      * @param serviceMap
-     * @return Map<String, Set<String>>
+     * @return Map<String, Set < String>>
      */
     private Map<String, Set<String>> optimizeServiceEntities
-            (List<ServiceEntityResults> serviceEntityResultsList, String serviceID,
-             Map<String, Set<String>> serviceMap) {
+    (List<ServiceEntityResults> serviceEntityResultsList, String serviceID,
+     Map<String, Set<String>> serviceMap) {
 
         List<List<String>> tcpDestinationList = new ArrayList<>();
         Set<String> udpDestinationSet = serviceMap.get("udpSet");
@@ -291,6 +307,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         }
         return serviceMap;
     }
+
     /**
      * createServiceEntitiesByProtocol - The service accepts a set of protocol sets and splits the tcp and udp sets
      * into a set of 15 entries and 7 for ranges
@@ -299,7 +316,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
      * @param protocolSet
      * @param ruleID
      * @param protocol
-     * @return Map<String, Set<String>>
+     * @return Map<String, Set < String>>
      */
     private List<String> createServiceEntitiesByProtocol(Set<String> protocolSet, String ruleID, String protocol) throws JsonProcessingException {
         List<List<String>> protocolFinalSubList = new ArrayList<>();
@@ -340,6 +357,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         }
         return createInfraServices(protocolFinalSubList, ruleID, protocol);
     }
+
     /**
      * createInfraServices - The service accepts a List of and creates services and service
      * entities
@@ -348,7 +366,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
      * @param protocolPortSubList
      * @param ruleID
      * @param protocol
-     * @return Map<String, Set<String>>
+     * @return Map<String, Set < String>>
      */
     private List<String> createInfraServices(List<List<String>> protocolPortSubList, String ruleID, String protocol) throws JsonProcessingException {
 
@@ -356,16 +374,19 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         ObjectMapper mapper = new ObjectMapper();
         List<InventoryServiceRow> inventoryServiceRowList = new ArrayList<InventoryServiceRow>();
         List<String> serviceIDList = new ArrayList<>();
-        protocolPortSubList.forEach(tcpDestPortList -> {
+        protocolPortSubList.forEach(protocolDestPortList -> {
             try {
                 List<InventoryService> serviceList = new ArrayList<InventoryService>();
                 List<InventoryServiceEntryRow> serviceEntryRowList = new ArrayList<InventoryServiceEntryRow>();
                 List<InventoryServiceEntry> serviceEntryList = new ArrayList<>();
                 List<String> sourcePorts = new ArrayList<>();
-                String serviceEntryID = ruleID + "-DST-" + protocol + "-SE-" + counter;
-                String serviceID = ruleID + "-DST-" + protocol + "-" + counter;
+                //StringBuffer serviceEntryID = new StringBuffer();
+
+                String serviceEntryID = getServiceID(protocolDestPortList, ruleID, protocol,  "SE", counter);
+                String serviceID = getServiceID(protocolDestPortList, ruleID, protocol,  "S", counter);
+
                 InventoryServiceEntry serviceEntry = new InventoryServiceEntry(protocol, sourcePorts,
-                        tcpDestPortList, "L4PortSetServiceEntry", serviceEntryID,
+                        protocolDestPortList, "L4PortSetServiceEntry", serviceEntryID,
                         serviceEntryID, false);
                 //serviceEntryList.add(serviceEntry);
 
@@ -410,12 +431,12 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         }
         return serviceIDList;
     }
+
     /**
      * updateServiceRule - Updates the existing rule with the newly created service and the ignored service list
      *
      * @param policyID
      * @param rule
-     *
      */
     private void updateServiceRule(String policyID, PolicyRuleResults rule) {
         ObjectMapper mapper = new ObjectMapper();
@@ -438,21 +459,58 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         }
 
     }
+    /**
+     * getServiceID - The method returns the following as the servoice ID depending on the protocolList and the serviceType and rule ID
+     * IF not range then <FIRSTIP-IN-SERVICEENTRYLIST>-<LASTIP-IN-SERVICEENTRYLIST>-DST-<PROTOCOL>-<SERVICE-TYPE>-<ITERATORVALUE>
+     *     -<FIRST OCTET OF RULEID if a - esists>
+     *
+     * IF range then <FIRSTIP-IN-SERVICEENTRYLIST>-<LASTIP-IN-SERVICEENTRYLIST>-R-DST-<PROTOCOL>-<SERVICE-TYPE>-<ITERATORVALUE>
+     *      *     -<FIRST OCTET OF RULEID if a - esists>
+     * @param protocolDestPortList
+     * @param ruleID
+     * @param protocol
+     * @param serviceType
+     * @param counter
+     * @return String
+     */
+    public String getServiceID(List<String> protocolDestPortList, String ruleID, String protocol, String serviceType, AtomicInteger counter) {
 
+        StringBuffer serviceID = new StringBuffer();
+        String startProtocolID =protocolDestPortList.get(0);
+        String endProtocolID = protocolDestPortList.get(protocolDestPortList.size()-1);
+        boolean range = false;
+        if(protocolDestPortList.get(0).contains("-")) {
+            startProtocolID = protocolDestPortList.get(0).substring(0, protocolDestPortList.get(0).indexOf("-"));
+            endProtocolID = protocolDestPortList.get(protocolDestPortList.size()-1).substring(protocolDestPortList
+                    .get(protocolDestPortList.size()-1).indexOf("-")+1);
+            range = true;
+        }
+        serviceID.append(startProtocolID);
+        serviceID.append("-");
+        serviceID.append(endProtocolID);
+        if(range) {
+            serviceID.append("-R-");
+        }
+        serviceID.append("-DST-");
+        serviceID.append(protocol);
+        serviceID.append("-");
+        serviceID.append(serviceType);
+        serviceID.append("-");
+        serviceID.append(counter);
+        serviceID.append("-");
+        if (ruleID.indexOf("-") != -1) {
+            serviceID.append(ruleID.substring(0, ruleID.indexOf("-")));
+        }
+        else
+            serviceID.append(ruleID);
 
-    private void createUDPServiceEntities() {
-
+        return serviceID.toString();
     }
 
-    private void createIgnoredServiceEntities() {
-    }
-
-    private void updateRule() {
-
-    }
-
-
-
+    /**
+     * getAllPolicies - gets all NSX-T Policies, Calls NSX API
+     * @return Mono<Policy>
+     */
     public Mono<Policy> getAllPolicies() throws Exception {
         return webClient.get()
                 .uri("/domains/default/security-policies")
@@ -460,7 +518,12 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                 .bodyToMono(Policy.class)
                 .timeout(Duration.ofMillis(100000));
     }
-
+    /**
+     * getPolicy - gets a Policy from NSX given a policyID Calls NSX API
+     *
+     * @param  policyID
+     * @return Mono<PolicyRule>
+     */
     public Mono<PolicyRule> getPolicy(String policyID) throws Exception {
         return webClient.get()
                 .uri("/domains/default/security-policies/" + policyID)
@@ -468,7 +531,13 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                 .bodyToMono(PolicyRule.class)
                 .timeout(Duration.ofMillis(100000));
     }
-
+    /**
+     * getRule - gets a Rule from NSX given a policyID and RuleID Calls NSX API
+     *
+     * @param policyID
+     * @param ruleID
+     * @return Mono<Rule>
+     */
 
     public Mono<Rule> getRule(String policyID, String ruleID) throws Exception {
 
@@ -478,7 +547,13 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                 .bodyToMono(Rule.class)
                 .timeout(Duration.ofMillis(100000));
     }
-
+    /**
+     * getServiceEntity - gets a Service Entry  from NSX given a serviceID
+     *
+     * @param serviceID
+     *
+     * @return Mono<ServiceEntity>
+     */
     public Mono<ServiceEntity> getServiceEntity(String serviceID) throws Exception {
 
         return webClient.get()
@@ -487,6 +562,8 @@ public class DfwOptimizerService implements IDfwOptimizerService {
                 .bodyToMono(ServiceEntity.class)
                 .timeout(Duration.ofMillis(100000));
     }
+
+
 
 
 }

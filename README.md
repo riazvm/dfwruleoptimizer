@@ -4,7 +4,7 @@ Contributors : Riaz Mohamed (@riazvm) & Sobana Thirunavukkarasu
 
 ## What does this do? 
 The application consolidates service entrys in a rule within a security policy which helps reduce rule explosion in 
-the Data Pane in NSX. This results in lowering performance issues resulting from multiple rule evaluations. NSX-T allows
+the Data Plane in NSX. This results in lowering performance issues resulting from multiple rule evaluations. NSX-T allows
 a maximum  of 15 service entries for tcp and udp in a single service entity.  We constantly see customer situations where 
 this feature is not used and mostly see multiple services being configured for a rule with only one service entry each. 
 NSX-T 3x evaluates and correct's there internally but with prior versions of NSX this needs to be done manually. Our 
@@ -40,20 +40,35 @@ sudo apt install docker-compose
 
 ```
 
-3. Modify the docker-compose.yml file to update the nsx ip , username and password
+3. Modify the docker-compose.yml file to update the following
+
+      - NSX-IP=xxxxx
+      - NSX-USER=admin
+      - NSX-PASSWORD=xxxxx
+      - NSX-RULE-SERVICE-COUNT=1
+
+NSX-RULE-SERVICE-COUNT denotes if number of services in the rule is greater than the nuber of services specified in NSX-RULE-SERVICE-COUNT variable then the rule will be optimized
    
 
 4. Run the application
 ```
 docker-compose up
 ```
+NOTE: The service and the service entries created will have the following naming format
+  IF not range then <FIRSTIP-IN-SERVICEENTRYLIST>-<LASTIP-IN-SERVICEENTRYLIST>-DST-<PROTOCOL>-<SERVICE-TYPE>-<ITERATORVALUE>-<FIRST OCTET OF RULEID if a - esists>
+  
+  IF range then <FIRSTIP-IN-SERVICEENTRYLIST>-<LASTIP-IN-SERVICEENTRYLIST>-R-DST-<PROTOCOL>-<SERVICE-TYPE>-<ITERATORVALUE> -<FIRST OCTET OF RULEID if a - esists>
 
+Eg. If a TCP Service with Service Entries 111,2049,30003,30004,43679,50013,8080 and a rule id of 1150 is created then the ServiceID will be
+111-8080-DST-TCP-S-0-1150
+Eg. If a Range for a TCP Service with Service Entries 50000-65535, and a rule id of 062b3bf0-e034-11eb-9943-1b67b1674c76 then the ServiceID will be
+50000-65535-R-DST-TCP-S-1-062b3bf0
 ## Modifying and building the application
 
 1. Clone the github repository
 
 ```
-https://github.com/riazvm/dfwruleoptimizer
+git clone https://github.com/riazvm/dfwruleoptimizer
 
 ```
 

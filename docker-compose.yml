@@ -8,4 +8,4 @@ services:
       - NSX-IP=10.25.0.181
       - NSX-USER=admin
       - NSX-PASSWORD=QOtB!4QpnYZ!fogcUtkE
-
+      - NSX-RULE-SERVICE-COUNT=1
