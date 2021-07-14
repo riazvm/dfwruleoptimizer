@@ -52,7 +52,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
         PolicyRule policyRules = policy.block();
         policyRules.getRules().forEach(rules -> {
             List<String> ruleServices = new ArrayList<>();
-            logger.debug("---------im here -------"+rules.getServices().size()+"------------"+servicecount);
+            logger.info("---------im here -------"+rules.getServices().size()+"------------"+servicecount);
             if (rules.getServices().size() > servicecount) {
                 try {
                     ruleServices = optimizeAndCreateServices(rules.getServices(), rules.getId());
@@ -385,7 +385,7 @@ public class DfwOptimizerService implements IDfwOptimizerService {
 
                 String serviceEntryID = getServiceID(protocolDestPortList, ruleID, protocol,  "SE", counter);
                 String serviceID = getServiceID(protocolDestPortList, ruleID, protocol,  "S", counter);
-                logger.info("------------"+serviceEntryID+"------IDDDDDDDDDDDDD----------"+serviceID);
+
                 InventoryServiceEntry serviceEntry = new InventoryServiceEntry(protocol, sourcePorts,
                         protocolDestPortList, "L4PortSetServiceEntry", serviceEntryID,
                         serviceEntryID, false);

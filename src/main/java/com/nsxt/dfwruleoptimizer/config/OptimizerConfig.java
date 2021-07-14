@@ -44,6 +44,7 @@ public class OptimizerConfig {
     @Value( "${nsx.service.password}" )
     private String nsxPassword;
 
+
     @Bean
     @Description("customer web client")
     public WebClient restClient(@Value("${nsx.service.baseurl}") String serviceUrl) throws SSLException, InterruptedException {
