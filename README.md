@@ -33,12 +33,10 @@ https://github.com/riazvm/dfwruleoptimizer
 
 2. Install docker and docker-compose if you do not have it already
 
-   
-```
-sudo apt install docker.io
-sudo apt install docker-compose
+[install docker](https://docs.docker.com/engine/install/))
 
-```
+[install docker-compose](https://docs.docker.com/compose/install/)
+
 
 3. Modify the docker-compose.yml file to update the following
 
